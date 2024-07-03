@@ -25,7 +25,7 @@ public class ExcelController {
 
         InputStreamResource inputStreamResource = new InputStreamResource(excel);
 
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, 
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment;filename=employee.xlsx")
                                    .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
                                     .body(inputStreamResource);

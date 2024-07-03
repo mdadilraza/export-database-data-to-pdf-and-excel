@@ -1,6 +1,8 @@
 package com.eidiko.report_generator.service;
 
 import com.eidiko.report_generator.entity.EmployeeEntity;
+import com.eidiko.report_generator.entity.FileEntity;
+import com.eidiko.report_generator.repository.FileRepo;
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
 import com.lowagie.text.pdf.PdfPCell;
@@ -8,10 +10,13 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -21,6 +26,8 @@ public class PdfService {
     @Autowired
     EmployeeService  employeeService;
 
+    @Autowired
+    FileRepo fileRepo;
 
     public ByteArrayInputStream createPdf(){
         List<EmployeeEntity> allEmployee = employeeService.getAllEmployee();
@@ -83,7 +90,7 @@ public class PdfService {
                 PdfPCell salaryCell = new PdfPCell(new Phrase(String.valueOf(employee.getEmpSalary())));
                 pdfPTable.addCell(salaryCell);
 
-                PdfPCell departmentCell = new PdfPCell(new Phrase(employee.getEmpDepartment()));
+                PdfPCell departmentCell = new PdfPCell(new Phrase());
                 pdfPTable.addCell(departmentCell);
 
 
@@ -96,4 +103,40 @@ public class PdfService {
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
 
     }
+
+    //Base64
+
+    public String storeInPdf(MultipartFile file) throws IOException {
+
+        if(file.isEmpty()) {
+            return "File must contain data";
+        }
+
+        byte[] data = file.getBytes();
+        String b64=Base64.getEncoder().encodeToString(data);
+
+        FileEntity fileEntity = FileEntity.builder().contentType(file.getContentType()).fileName(file.getOriginalFilename())
+                .data(b64).build();
+
+
+        FileEntity save = fileRepo.save(fileEntity);
+
+        if(save.getId() !=null) {
+            return "Upload success";
+        }
+        return "Failed";
+    }
+
+    //decode
+
+    public byte[] decode(String fileName) {
+
+        FileEntity file = fileRepo.findByFileName(fileName);
+
+        String data = file.getData();
+
+      return Base64.getDecoder().decode(data);
+    }
+
+
 }
